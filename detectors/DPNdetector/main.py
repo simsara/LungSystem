@@ -140,7 +140,7 @@ def main():
         import data
         split_comber = SplitComb(
             sidelen, config['max_stride'], config['stride'], margin, config['pad_value'])
-        dataset = data.DataBowl3Detector(   # 数据集
+        dataset = data.LUNA16Dataset(   # 数据集
             testdatadir,
             testfilelist,
             config,
@@ -162,8 +162,8 @@ def main():
         return
     #net = DataParallel(net)
     import data
-    print len(trainfilelist)  # 训练文件集合
-    dataset = data.DataBowl3Detector(
+    print(len(trainfilelist))  # 训练文件集合
+    dataset = data.LUNA16Dataset(
         traindatadir,
         trainfilelist,
         config,
@@ -175,7 +175,7 @@ def main():
         num_workers=args.workers,
         pin_memory=True)
 
-    dataset = data.DataBowl3Detector(
+    dataset = data.LUNA16Dataset(
         valdatadir,
         valfilelist,
         config,
