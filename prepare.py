@@ -64,7 +64,7 @@ def savenpy_luna(id, annos, filelist, luna_segment, luna_data,savepath): # 转�
     islabel = True  
     isClean = True  
     resolution = np.array([1,1,1])  # 分辨率
-    name = filelist[id]  # 。mhd 前面的部分
+    name = filelist[id]  # 文件名数组中的第id个 
     
     sliceim,origin,spacing,isflip = load_itk_image(os.path.join(luna_data,name+'.mhd')) #加载原始数据
 

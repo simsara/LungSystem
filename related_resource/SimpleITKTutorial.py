@@ -14,8 +14,15 @@ import os
 from PIL import Image
 import matplotlib.pyplot as plt
 
+# import ptvsd
 
-def load_itk_imaghe(filename):
+# # Allow other computers to attach to ptvsd at this IP address and port.
+# ptvsd.enable_attach(address=('192.168.1.112', 40068), redirect_output=True)
+
+# # Pause the program until a remote debugger is attached
+# ptvsd.wait_for_attach()
+
+def load_itk_image(filename):
     itkimage = sitk.ReadImage(filename)
     numpyImage = sitk.GetArrayFromImage(itkimage)
     numpyOrigin = np.array(list(reversed(itkimage.GetOrigin())))
@@ -52,10 +59,10 @@ img_path = "/home/liubo/data/LUNA16/subset0/1.3.6.1.4.1.14519.5.2.1.6279.6001.97
 cand_path = "/home/liubo/data/LUNA16/CSVFILES/annotations.csv"
 
 # load image
-numpyImage,numpyOrigin,numpySpacing = load_itk_imaghe(img_path)
-print(numpyImage.shape)
-print(numpyOrigin)
-print(numpySpacing)
+numpyImage,numpyOrigin,numpySpacing = load_itk_image(img_path)
+# print(numpyImage.shape)
+# print(numpyOrigin)
+# print(numpySpacing)
 """
 输出结果
 (140, 512, 512)
@@ -66,13 +73,15 @@ print(numpySpacing)
 # load candidates
 cands = readCSV(cand_path)
 # print(cands)
-#get candiates
-for cand in cands[1:]:
+# get candiates
+for idx in range(1,len(cands)):
     # TODO 这里还有问题
+    cand = cands[idx]
+    print("processing %d"%idx)
     worldCoord = np.asarray([float(cand[3]),float(cand[2]),float(cand[1])])
     voxelCoord = worldToVoxelCoord(worldCoord,numpyOrigin,numpySpacing)
     voxelWidth = 65
-    patch = numpyImage[voxelCoord[0],voxelCoord[1]-voxelWidth/2:voxelCoord[1]+voxelWidth/2,voxelCoord[2]-voxelWidth/2:voxelCoord[2]+voxelWidth/2]
+    patch = numpyImage[int(voxelCoord[0]),int(voxelCoord[1]-voxelWidth/2):int(voxelCoord[1]+voxelWidth/2),int(voxelCoord[2]-voxelWidth/2):int(voxelCoord[2]+voxelWidth/2)]
     patch = normalizePlanes(patch)
     print("data")
     print(worldCoord)
@@ -80,18 +89,7 @@ for cand in cands[1:]:
     print(patch)
     outputDir = "patches/"
     plt.imshow(patch, cmap="gray")
-    plt.show()
-    input()
-    
-
-
-
-# Extract patch for each candidate in the list
-
-
-
-
-
-
-
-
+    im = Image.fromarray((patch*255).astype('uint8')).convert("RGB")
+    img_path = os.path.join(outputDir, 'patch_' + "_".join([str(coord) for coord in worldCoord]) + ".png")
+    print(img_path)
+    im.save(img_path)
