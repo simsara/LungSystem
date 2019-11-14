@@ -40,7 +40,7 @@ def readCSV(filename):
 def worldToVoxelCoord(worldCoord,origin,spacing):
     # 一些解释 http://www.freesion.com/article/563621885/
     # transform from world coordinates to voxel coordinates
-    stretchedVoxelCoord = np.absolute(worldCoord -origin)
+    stretchedVoxelCoord = np.absolute(worldCoord - origin)
     voxelCoord = stretchedVoxelCoord / spacing
     return voxelCoord
 
@@ -77,19 +77,22 @@ cands = readCSV(cand_path)
 for idx in range(1,len(cands)):
     # TODO 这里还有问题
     cand = cands[idx]
-    print("processing %d"%idx)
-    worldCoord = np.asarray([float(cand[3]),float(cand[2]),float(cand[1])])
-    voxelCoord = worldToVoxelCoord(worldCoord,numpyOrigin,numpySpacing)
-    voxelWidth = 65
-    patch = numpyImage[int(voxelCoord[0]),int(voxelCoord[1]-voxelWidth/2):int(voxelCoord[1]+voxelWidth/2),int(voxelCoord[2]-voxelWidth/2):int(voxelCoord[2]+voxelWidth/2)]
-    patch = normalizePlanes(patch)
-    print("data")
-    print(worldCoord)
-    print(voxelCoord)
-    print(patch)
-    outputDir = "patches/"
-    plt.imshow(patch, cmap="gray")
-    im = Image.fromarray((patch*255).astype('uint8')).convert("RGB")
-    img_path = os.path.join(outputDir, 'patch_' + "_".join([str(coord) for coord in worldCoord]) + ".png")
-    print(img_path)
-    im.save(img_path)
+    # print("processing %d"%idx)
+    if cand[1] == "1.3.6.1.4.1.14519.5.2.1.6279.6001.979083010707182900091062408058":
+        worldCoord = np.asarray([float(cand[3]),float(cand[2]),float(cand[1])])
+        voxelCoord = worldToVoxelCoord(worldCoord,numpyOrigin,numpySpacing)
+        # voxelWidth = 65
+        # patch = numpyImage[int(voxelCoord[0]),int(voxelCoord[1]-voxelWidth/2):int(voxelCoord[1]+voxelWidth/2),int(voxelCoord[2]-voxelWidth/2):int(voxelCoord[2]+voxelWidth/2)]
+        patch = numpyImage[int(voxelCoord[0])]
+        patch = normalizePlanes(patch)
+        print("wordCoord")
+        print(worldCoord)
+        print("voxelCoord")
+        print(voxelCoord)
+        # print(patch)
+        outputDir = "patches/"
+        plt.imshow(patch, cmap="gray")
+        im = Image.fromarray((patch*255).astype('uint8')).convert("RGB")
+        img_path = os.path.join(outputDir, 'patch_' + "_".join([str(coord) for coord in worldCoord]) + ".png")
+        print(img_path)
+        im.save(img_path)
