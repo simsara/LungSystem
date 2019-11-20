@@ -13,7 +13,7 @@ additional_annotations.csv: csv file that contain additional nodule annotations 
 """
 
 LUNA16ROOTPATH="/home/liubo/data/LUNA16/"  # 原来的数据集跟目录
-LUNA16PROCESSPATH="/home/liubo/data/LUNA16_PROCESS/" # 处理结果
+LUNA16PROCESSPATH="/home/liubo/data/LUNA16_PROCESS_NEW/" # 处理结果
 
 
 config = {'luna_root':LUNA16ROOTPATH,

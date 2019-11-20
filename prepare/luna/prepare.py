@@ -2,7 +2,6 @@ import os
 import shutil
 import numpy as np
 import sys
-from configs.config_training import config
 from scipy.io import loadmat
 import numpy as np
 import h5py
@@ -15,10 +14,11 @@ from skimage import measure
 import SimpleITK as sitk
 from scipy.ndimage.morphology import binary_dilation, generate_binary_structure
 from skimage.morphology import convex_hull_image
-import pandas
 from multiprocessing import Pool  # 多线程操作
 from functools import partial
 import warnings
+
+from configs.luna16.config_training import config
 
 
 def load_itk_image(filename):
