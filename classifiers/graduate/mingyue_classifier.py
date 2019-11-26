@@ -38,7 +38,7 @@ BATCH_SIZE = 8
 TRAIN_DATA_ROOT = "/home/liubo/data/graduate/classification_dataset/train/"
 
 # 生成训练和验证集图像地址列表并返回
-def get_train_holdout_files(train_percentage=0.8, full_luna_set=False):
+def get_train_holdout_files(train_percentage=0.8):
     # 不同的标签分别加载
     src_dir = TRAIN_DATA_ROOT 
     one_samples = glob.glob(src_dir+'one/' + "*.png")
@@ -60,14 +60,6 @@ def get_train_holdout_files(train_percentage=0.8, full_luna_set=False):
                       + four_samples[four_sample_train:] + five_samples[five_sample_train:]
     random.shuffle(samples_train)
     random.shuffle(samples_holdout)
-
-
-    # 如果测试集也加入到训练集
-    if full_luna_set:
-        # pos_samples_train 变为所有数据
-        samples_train += samples_holdout
-        print('samples_train:', len(samples_train))
-
 
     # 加标签
     # TODO 可以优化
@@ -111,8 +103,7 @@ def data_generator(batch_size, record_list, is_train_set):
     while True:
         img_list = []
         class_list = []
-        if is_train_set:
-            random.shuffle(record_list)
+        
         for record_idx, record_item in enumerate(record_list):
             class_label = int(record_item[1])
             cube_image = base_dicom_process.load_cube_img(record_item[0], 8, 8, 64)
@@ -120,13 +111,13 @@ def data_generator(batch_size, record_list, is_train_set):
         # 以下为四种随机翻转方式
         if is_train_set:  
             if random.randint(0, 100) > 50:
-                cube_image = np.fliplr(cube_image)
+                cube_image = np.fliplr(cube_image)   # 左右交换
             if random.randint(0, 100) > 50:
-                cube_image = np.flipud(cube_image)
+                cube_image = np.flipud(cube_image)   # 上下交换
             if random.randint(0, 100) > 50:
-                cube_image = cube_image[:, :, ::-1]
+                cube_image = cube_image[:, :, ::-1]  # 另一种交换
             if random.randint(0, 100) > 50:
-                cube_image = cube_image[:, ::-1, :]
+                cube_image = cube_image[:, ::-1, :]   # 另一可交换
 
         img3d = prepare_image_for_net3D(cube_image)
         img_list.append(img3d)
