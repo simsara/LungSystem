@@ -1,3 +1,4 @@
+from mycall_back import MyCallback
 import os
 import sys
 sys.path.append(os.path.realpath("."))
@@ -109,36 +110,36 @@ def data_generator(batch_size, record_list, is_train_set):
             cube_image = base_dicom_process.load_cube_img(record_item[0], 8, 8, 64)
         
         # 以下为四种随机翻转方式
-        if is_train_set:  
-            if random.randint(0, 100) > 50:
-                cube_image = np.fliplr(cube_image)   # 左右交换
-            if random.randint(0, 100) > 50:
-                cube_image = np.flipud(cube_image)   # 上下交换
-            if random.randint(0, 100) > 50:
-                cube_image = cube_image[:, :, ::-1]  # 另一种交换
-            if random.randint(0, 100) > 50:
-                cube_image = cube_image[:, ::-1, :]   # 另一可交换
+            if is_train_set:  
+                if random.randint(0, 100) > 50:
+                    cube_image = np.fliplr(cube_image)   # 左右交换
+                if random.randint(0, 100) > 50:
+                    cube_image = np.flipud(cube_image)   # 上下交换
+                if random.randint(0, 100) > 50:
+                    cube_image = cube_image[:, :, ::-1]  # 另一种交换
+                if random.randint(0, 100) > 50:
+                    cube_image = cube_image[:, ::-1, :]   # 另一可交换
 
-        img3d = prepare_image_for_net3D(cube_image)
-        img_list.append(img3d)
-        class_list.append(class_label)
+            img3d = prepare_image_for_net3D(cube_image)
+            img_list.append(img3d)
+            class_list.append(class_label)
 
-        batch_count += 1
-        if batch_count >= batch_size:
-            x = np.vstack(img_list)
-            y_class = np.vstack(class_list)
-            # 将标签转换为分类的 one-hot 编码
-            one_hot_labels = utils.to_categorical(y_class, num_classes=5)
-            # yield 是返回部分，详见python生成器解释
-            yield x, {"out_class": one_hot_labels}
-            img_list = []
-            class_list = []
-            batch_count = 0
-
+            batch_count += 1
+            if batch_count >= batch_size:
+                x = np.vstack(img_list)
+                y_class = np.vstack(class_list)
+                # 将标签转换为分类的 one-hot 编码
+                one_hot_labels = utils.to_categorical(y_class, num_classes=5)
+                # yield 是返回部分，详见python生成器解释
+                yield x, {"out_class": one_hot_labels}
+                img_list = []
+                class_list = []
+                batch_count = 0
 
 
 # -> 标注函数返回类型   https://blog.csdn.net/orangefly0214/article/details/91583506
 def get_net(input_shape=(64, 64, 64, 1), load_weight_path=None, features=False) -> Model:
+
     inputs = Input(shape=input_shape, name="input_1")
     x = inputs
     x = AveragePooling3D(strides=(2, 1, 1), pool_size=(2, 1, 1), padding="same")(x)
@@ -150,22 +151,22 @@ def get_net(input_shape=(64, 64, 64, 1), load_weight_path=None, features=False) 
     x = Convolution3D(128, (3, 3, 3), activation='relu', padding='same', name='conv2', strides=(1, 1, 1))(x)
     x = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), padding='valid', name='pool2')(x)
 
-    if USE_DROPOUT:
-        x = Dropout(rate=0.3)(x)
+    # if USE_DROPOUT:
+    #     x = Dropout(rate=0.3)(x)
 
     x = Convolution3D(256, (3, 3, 3), activation='relu', padding='same', name='conv3a', strides=(1, 1, 1))(x)
     x = Convolution3D(256, (3, 3, 3), activation='relu', padding='same', name='conv3b', strides=(1, 1, 1))(x)
     x = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), padding='valid', name='pool3')(x)
 
-    if USE_DROPOUT:
-        x = Dropout(rate=0.4)(x)
+    # if USE_DROPOUT:
+    #     x = Dropout(rate=0.4)(x)
 
     x = Convolution3D(512, (3, 3, 3), activation='relu', padding='same', name='conv4a', strides=(1, 1, 1))(x)
     x = Convolution3D(512, (3, 3, 3), activation='relu', padding='same', name='conv4b', strides=(1, 1, 1),)(x)
     x = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), padding='valid', name='pool4')(x)
 
-    if USE_DROPOUT:
-        x = Dropout(rate=0.5)(x)
+    # if USE_DROPOUT:
+    #     x = Dropout(rate=0.5)(x)
 
     # 新加部分
     x = Convolution3D(512, (3, 3, 3), activation='relu', padding='same', name='conv5a', strides=(1, 1, 1))(x)
@@ -182,7 +183,8 @@ def get_net(input_shape=(64, 64, 64, 1), load_weight_path=None, features=False) 
 
     # 定义一个有一个输入一个输出的模型
     model = Model(inputs=inputs, outputs=out_class)
-    if load_weight_path is not None:
+    # 如果有之前训练好的参数，加载参数
+    if load_weight_path is not None:  
         model.load_weights(load_weight_path, by_name=False)
     # 定义损失函数、优化函数、和评测方法
     # optimzer:SGD()是随机梯度下降以及对应参数
@@ -228,18 +230,18 @@ def train(model_name,train_full_set=False,load_weights_path=None):
     model = get_net(load_weight_path=load_weights_path)
 
     # 每隔1轮保存一次模型
-    print("###############ModelCheckpoint")
-    checkpoint = ModelCheckpoint("workdir/cancer_classifier/model_" + model_name + "_" + "_e" + "{epoch:02d}-{val_loss:.4f}.hd5",
-                                 monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
+    checkpoint = ModelCheckpoint(filepath="/home/liubo/nn_project/LungSystem/workdir/cancer_classifier/model_" + model_name + "_" + "_e" + "{epoch:02d}-{val_loss:.4f}.hd5",
+                                 monitor='val_loss', verbose=1, save_best_only=False, save_weights_only=False, mode='auto', period=1)
     # 每隔一轮且每当val_loss降低时保存一次模型
-    checkpoint_fixed_name = ModelCheckpoint("workdir/cancer_classifier/model_" + model_name + "_best.hd5",
+    checkpoint_fixed_name = ModelCheckpoint("/home/liubo/nn_project/LungSystem/workdir/cancer_classifier/model_" + model_name + "_best.hd5",
                                             monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
-
+    my_call_back = MyCallback(filepath=None)
+    
     print("len(train_files)",len(train_files))
     print("len(holdout_files)",len(holdout_files))
     model.fit_generator(generator=train_gen, steps_per_epoch=int(len(train_files)/batch_size), epochs=1000, validation_data=holdout_gen,
-                        validation_steps=int(len(holdout_files)/batch_size), callbacks=[checkpoint, checkpoint_fixed_name, learnrate_scheduler, TensorBoard(log_dir=log_dir)])
+                        validation_steps=int(len(holdout_files)/batch_size), callbacks=[my_call_back,checkpoint, checkpoint_fixed_name, learnrate_scheduler, TensorBoard(log_dir=log_dir)])
 
     # model.save("../../models/graduate/model_" + model_name + "_end.hd5")
     model.save("model_" + model_name + "_end.hd5")
@@ -248,6 +250,10 @@ def train(model_name,train_full_set=False,load_weights_path=None):
 
 
 if __name__ == "__main__":
+
+
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+
     # 模型要保存得路径
     # model_path = "../../models/graduate/model_cancer_type__fs_best.hd5"
     model_path = "model_cancer_type__fs_best.hd5"
@@ -256,4 +262,4 @@ if __name__ == "__main__":
     train(model_name="cancer_classifier",train_full_set=False)
     # TODO 路径更改
     # shutil.copy("models/graduate/model_cancer_type_best.hd5", "models/model_cancer_type_best.hd5")
-    
+  
