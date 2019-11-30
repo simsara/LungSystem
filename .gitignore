@@ -105,3 +105,7 @@ venv.bak/
 
 # VS code
 .vscode/
+
+# workdir & log
+workdir/
+logs/
