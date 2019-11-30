@@ -33,7 +33,7 @@ set_session(tf.Session(config=config))
 
 LEARN_RATE = 0.001
 USE_DROPOUT = False
-log_dir = './logs/000'  # TODO  稍后检查log 文件
+log_dir = './logs/000' 
 mean_pixel_values = 118 # 像素平均数
 BATCH_SIZE = 8
 TRAIN_DATA_ROOT = "/home/liubo/data/graduate/classification_dataset/train/"
