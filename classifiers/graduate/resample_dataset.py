@@ -10,50 +10,18 @@ config = {
 }
 
 class ClassificationDataset:
+    """
+    数据集 功能：
+    - 接受训练 测试数据地址
+    - 准备训练验证集合数据 （训练要resample）
+    - 准备测试集合数据
+    - 产生训练验证generator
+    - 产生测试generator
+    """
     def __init__(self, train_dir, test_dir,batch_size):
         self.train_dir = train_dir
         self.test_dir = test_dir
         self.batch_size = batch_size
-
-        self.train_zero_samples = glob.glob(train_dir+'zero/' + '*.png')
-        self.train_one_samples = glob.glob(train_dir + 'one/' + "*.png")
-        self.train_two_samples = glob.glob(train_dir + 'two/' + "*.png")
-        self.train_three_samples = glob.glob(train_dir + 'three/' + "*.png")
-        self.train_four_samples = glob.glob(train_dir + 'four/' + "*.png")
-
-        self.test_zero_samples = glob.glob(test_dir+'zero/' + '*.png')
-        self.test_one_samples = glob.glob(test_dir + 'one/' + "*.png")
-        self.test_two_samples = glob.glob(test_dir + 'two/' + "*.png")
-        self.test_three_samples = glob.glob(test_dir + 'three/' + "*.png")
-        self.test_four_samples = glob.glob(test_dir + 'four/' + "*.png")
-
-        self.train_origin_path = [self.train_zero_samples,
-                                  self.train_one_samples,
-                                  self.train_two_samples,
-                                  self.train_three_samples,
-                                  self.train_four_samples]
-        
-        self.test_origin_path = [self.test_zero_samples,
-                                 self.test_one_samples,
-                                 self.test_two_samples,
-                                 self.test_three_samples,
-                                 self.test_four_samples]
-        
-
-        print("train zero: ", len(self.train_zero_samples))
-        print("train one: ", len(self.train_one_samples))
-        print("train two: ", len(self.train_two_samples))
-        print("train three: ", len(self.train_three_samples))
-        print("train four: ", len(self.train_four_samples))
-
-        print("-"* 20)
-
-        print("test zero: ", len(self.test_zero_samples))
-        print("test one: ", len(self.test_one_samples))
-        print("test two: ", len(self.test_two_samples))
-        print("test three: ", len(self.test_three_samples))
-        print("test four: ", len(self.test_four_samples))
-
 
     def get_class_label(self,sample_path):
         class_label = sample_path.split('_')[-2]
@@ -61,6 +29,52 @@ class ClassificationDataset:
             return "0"
         else:
             return class_label
+
+
+    def prepare_train_val_dataset(self):
+        train_dir = self.train_dir
+        self.train_zero_samples = glob.glob(train_dir+'zero/' + '*.png')
+        self.train_one_samples = glob.glob(train_dir + 'one/' + "*.png")
+        self.train_two_samples = glob.glob(train_dir + 'two/' + "*.png")
+        self.train_three_samples = glob.glob(train_dir + 'three/' + "*.png")
+        self.train_four_samples = glob.glob(train_dir + 'four/' + "*.png")
+
+        self.train_origin_path = [self.train_zero_samples,
+                                  self.train_one_samples,
+                                  self.train_two_samples,
+                                  self.train_three_samples,
+                                  self.train_four_samples]
+
+        print("-"* 20)
+        print("train zero: ", len(self.train_zero_samples))
+        print("train one: ", len(self.train_one_samples))
+        print("train two: ", len(self.train_two_samples))
+        print("train three: ", len(self.train_three_samples))
+        print("train four: ", len(self.train_four_samples))
+        print("-"* 20)
+
+    def prepare_test_dataset(self):
+        test_dir = self.test_dir
+        self.test_zero_samples = glob.glob(test_dir+'zero/' + '*.png')
+        self.test_one_samples = glob.glob(test_dir + 'one/' + "*.png")
+        self.test_two_samples = glob.glob(test_dir + 'two/' + "*.png")
+        self.test_three_samples = glob.glob(test_dir + 'three/' + "*.png")
+        self.test_four_samples = glob.glob(test_dir + 'four/' + "*.png")
+
+        self.test_origin_path = [self.test_zero_samples,
+                                 self.test_one_samples,
+                                 self.test_two_samples,
+                                 self.test_three_samples,
+                                 self.test_four_samples]
+
+        print("-"* 20)
+        print("test zero: ", len(self.test_zero_samples))
+        print("test one: ", len(self.test_one_samples))
+        print("test two: ", len(self.test_two_samples))
+        print("test three: ", len(self.test_three_samples))
+        print("test four: ", len(self.test_four_samples))
+        print("-"* 20)
+                                
 
     def get_resampled_train_val_dataset(self,train_n=80,val_n=20):
         """
@@ -94,6 +108,21 @@ class ClassificationDataset:
         # 只有训练集需要shuffle
         random.shuffle(train_resampled)
         return train_resampled,val_resampled
+
+    def get_test_dataset(self):
+        test_img_list = []
+        test_label_list = []
+        for one_class_samples in self.test_origin_path:
+            for sample_path in one_class_samples:
+                img = self.load_cube_img(sample_path)
+                img3d = self.prepare_image_for_net3D(img)
+                label = int(self.get_class_label(sample_path))
+                test_img_list.append(img3d)
+                test_label_list.append(label)
+
+        x = np.vstack(test_img_list)
+        y = np.vstack(test_label_list)
+        return [x,y]
 
 
     # 每个图片是由多个小图片连在一起的，这个函数把小图像分割出来存进列表并返回
@@ -140,6 +169,7 @@ class ClassificationDataset:
                 #这样进行batch生成会导致未被样本整除的余数被舍弃
                 class_label = int(record[1])
                 cube_image = self.load_cube_img(record[0], 8, 8, 64)
+
         
                 if is_train_set:  
                     if random.randint(0, 100) > 50:
@@ -164,16 +194,33 @@ class ClassificationDataset:
                     class_list = []
                     batch_count = 0
         
-        
 
 
 if __name__ == "__main__":
     train_dir = "/home/liubo/data/graduate/classification_dataset/train/"
     test_dir = "/home/liubo/data/graduate/classification_dataset/test/"
     batch_size = 8
+
+    # train val
     dataset = ClassificationDataset(train_dir, test_dir,batch_size)
-    train_resampled,val_resampled = dataset.get_resampled_train_val_dataset(train_n=80,val_n=20)
-    train_gen = dataset.data_generator(batch_size=8,record_list=train_resampled,is_train_set=True)
-    for x,y in train_gen:
+    # dataset.prepare_train_val_dataset()
+    # train_resampled,val_resampled = dataset.get_resampled_train_val_dataset(train_n=80,val_n=20)
+    # train_gen = dataset.data_generator(batch_size=8,record_list=train_resampled,is_train_set=True)
+    # val_gen = dataset.data_generator(batch_size=8,record_list=val_resampled,is_train_set=False)
+    # for x,y in train_gen:
+    #     print(x.shape,y)
+    # for x,y in val_gen:
+    #     print(x.shape,y)
+
+    # test 
+    dataset.prepare_test_dataset()
+    test = dataset.get_test_dataset()
+    print(test[0].shape)
+    input()
+    print(test[1].shape)
+    for x,y in test:
         print(x.shape,y)
         input()
+
+    
+        

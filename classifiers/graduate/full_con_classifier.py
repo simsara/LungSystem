@@ -18,6 +18,7 @@ configs = {
     "batch_size" : 8,
     "log_dir":"./logs/000",
     "model_name":"cancer_classifier",
+    "model_save_path":"/home/liubo/nn_project/LungSystem/models/guaduate/model_cancer_classifier_best.hd5",
     "learn_rate":0.0001
 }
 
@@ -78,6 +79,7 @@ def train(model_name,load_weight_path=None):
     test_dir = configs["test_dir"]
     batch_size = configs["batch_size"]
     dataset= ClassificationDataset(train_dir,test_dir,batch_size)
+    dataset.prepare_train_val_dataset()
     train_resampled,val_resampled = dataset.get_resampled_train_val_dataset(train_n=80,val_n=20)
     train_gen = dataset.data_generator(batch_size=8,record_list=train_resampled,is_train_set=True)
     val_gen = dataset.data_generator(batch_size=8,record_list=val_resampled,is_train_set=False)
@@ -101,6 +103,7 @@ def train(model_name,load_weight_path=None):
 
 
 if __name__ == "__main__":
+
     os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
     model_path_dir = "/home/liubo/nn_project/LungSystem/models/guaduate/"
     if not os.path.exists("models/guaduate/"):
@@ -108,5 +111,7 @@ if __name__ == "__main__":
     model_name = "model_full_con_classifier_best.hd5"
     train(model_name=configs["model_name"])
     # TODO copy best model
+
+
     
     
